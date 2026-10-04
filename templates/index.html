@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SafeRoute AI</title>
+<style>
+  :root { --bg:#0f172a; --panel:#1e293b; --ink:#e2e8f0; --muted:#94a3b8; --teal:#14b8a6;
+          --green:#22c55e; --amber:#f59e0b; --orange:#f97316; --red:#ef4444; --line:#334155; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:16px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
+  header h1 { margin:0; font-size:22px; } header h1 span { color:var(--teal); }
+  header p { margin:0; color:var(--muted); font-size:14px; }
+  main { display:grid; grid-template-columns:minmax(300px,380px) 1fr; gap:16px; padding:16px 24px; }
+  @media (max-width:900px){ main{grid-template-columns:1fr; padding:12px;} }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:14px; }
+  .panel h3 { margin:0 0 10px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  label { display:block; font-size:13px; color:var(--muted); margin:8px 0 4px; }
+  select, input[type=range], button, input[type=text] { width:100%; }
+  select, input[type=text] { background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:9px; font-size:14px; }
+  button { background:var(--teal); color:#042f2e; border:0; border-radius:8px; padding:11px; font-weight:700; font-size:15px; cursor:pointer; margin-top:12px; }
+  button:hover { filter:brightness(1.1); } button.ghost { background:transparent; color:var(--teal); border:1px solid var(--teal); }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  .toggle { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--ink); margin:10px 0 0; }
+  .toggle input { width:auto; }
+  .route { border:2px solid var(--line); border-radius:10px; padding:10px; margin-bottom:10px; cursor:pointer; background:var(--bg); }
+  .route.sel { border-color:var(--teal); }
+  .route .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .tag { font-size:11px; padding:2px 8px; border-radius:99px; font-weight:700; margin-right:4px; background:#334155; color:#e2e8f0; }
+  .tag.Recommended { background:var(--teal); color:#042f2e; } .tag.Safest { background:var(--green); color:#052e16; } .tag.Fastest { background:var(--amber); color:#451a03; }
+  .badge { font-weight:800; padding:4px 10px; border-radius:8px; color:#0f172a; white-space:nowrap; }
+  .via { font-size:13px; color:var(--muted); margin:6px 0; }
+  .meter { height:8px; background:#334155; border-radius:6px; overflow:hidden; } .meter i { display:block; height:100%; }
+  .stats { display:flex; gap:14px; font-size:13px; margin-top:8px; color:var(--ink); }
+  .advice p { margin:0 0 10px; line-height:1.5; font-size:14px; }
+  .advice ul { margin:4px 0 10px; padding-left:18px; font-size:13px; color:var(--muted); } .advice h4 { margin:10px 0 2px; font-size:13px; color:var(--teal); }
+  .src { font-size:11px; color:var(--muted); }
+  svg { width:100%; height:auto; background:#0b1222; border-radius:12px; border:1px solid var(--line); }
+  .legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--muted); margin-top:10px; }
+  .legend span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; background:var(--c); }
+  .err { color:var(--red); font-size:14px; }
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:28px">🛣️</div>
+  <div><h1>Safe<span>Route</span> AI</h1><p>Navigation that picks the safest road, not just the shortest.</p></div>
+</header>
+<main>
+  <section>
+    <div class="panel">
+      <h3>Plan your trip</h3>
+      <label>From</label><select id="src"></select>
+      <label>To</label><select id="dst"></select>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="night"> 🌙 Night</label>
+        <label class="toggle"><input type="checkbox" id="rain"> 🌧️ Rain</label>
+      </div>
+      <label>Priority: <b id="wlabel">Safety-first</b></label>
+      <input type="range" id="safety" min="0" max="100" value="70">
+      <button id="go">Find safest route</button>
+    </div>
+    <div id="results"></div>
+    <div class="panel">
+      <h3>Report a hazard (crowdsourced)</h3>
+      <label>Road</label><select id="rroad"></select>
+      <div class="row">
+        <div><label>Type</label><select id="rtype"></select></div>
+        <div><label>Severity</label><select id="rsev"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <label>Note</label><input type="text" id="rnote" placeholder="e.g. Open manhole near the bus stop">
+      <button class="ghost" id="report">Submit report</button>
+      <div id="rmsg" class="src" style="margin-top:6px"></div>
+    </div>
+  </section>
+  <section>
+    <svg id="map" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="legend" id="legend"></div>
+    <div class="panel advice" id="advice" style="margin-top:14px;display:none"></div>
+  </section>
+</main>
+
+<script>
+const COLORS = {accident_zone:'#ef4444', waterlogging:'#3b82f6', poor_lighting:'#a855f7',
+                pothole:'#f59e0b', congestion:'#f97316', reported_hazard:'#ec4899'};
+const ICON = {accident_zone:'!', waterlogging:'≈', poor_lighting:'☾', pothole:'o', congestion:'▮', reported_hazard:'?'};
+const LEVEL_COLOR = {Low:'#22c55e', Moderate:'#f59e0b', High:'#f97316', 'Very High':'#ef4444'};
+let NET = null, DATA = null, SEL = null;
+const $ = id => document.getElementById(id);
+
+async function init() {
+  NET = await (await fetch('/api/network')).json();
+  const opts = Object.entries(NET.nodes).map(([k, n]) => `<option value="${k}">${n.name}</option>`).join('');
+  $('src').innerHTML = opts; $('dst').innerHTML = opts; $('src').value = 'RS'; $('dst').value = 'HO';
+  $('rroad').innerHTML = NET.edges.map((e, i) => `<option value="${i}">${e.name} (${NET.nodes[e.a].name} – ${NET.nodes[e.b].name})</option>`).join('');
+  $('rtype').innerHTML = Object.entries(NET.hazard_types).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  $('legend').innerHTML = Object.entries(NET.hazard_types).map(([k, v]) => `<span style="--c:${COLORS[k]}">${v}</span>`).join('');
+  drawMap();
+  find();
+}
+
+function wlabel() {
+  const v = +$('safety').value;
+  $('wlabel').textContent = v >= 85 ? 'Safest possible' : v >= 55 ? 'Safety-first' : v >= 30 ? 'Balanced' : 'Speed-first';
+}
+
+function drawMap() {
+  const svg = $('map'); let h = '';
+  for (const e of NET.edges) {
+    const a = NET.nodes[e.a], b = NET.nodes[e.b];
+    h += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#334155" stroke-width="1.2" stroke-linecap="round"/>`;
+  }
+  if (DATA) {
+    const order = DATA.routes.filter(r => r.id !== SEL).concat(DATA.routes.filter(r => r.id === SEL));
+    for (const r of order) {
+      const pts = r.path.map(n => `${NET.nodes[n].x},${NET.nodes[n].y}`).join(' ');
+      const sel = r.id === SEL;
+      h += `<polyline points="${pts}" fill="none" stroke="${sel ? LEVEL_COLOR[r.risk_level] : '#64748b'}"
+            stroke-width="${sel ? 2.2 : 0.8}" opacity="${sel ? 1 : .45}" stroke-linecap="round" stroke-linejoin="round"
+            ${sel ? '' : 'stroke-dasharray="1.5 1.5"'}/>`;
+    }
+  }
+  // hazard markers at the middle of each road, fanned out
+  for (const e of NET.edges) {
+    const a = NET.nodes[e.a], b = NET.nodes[e.b];
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+    e.hazards.forEach((hz, i) => {
+      const off = (i - (e.hazards.length - 1) / 2) * 3.6;
+      const x = mx + dx / len * off, y = my + dy / len * off;
+      h += `<g><circle cx="${x}" cy="${y}" r="1.7" fill="${COLORS[hz.type]}" stroke="#0b1222" stroke-width=".4"/>
+            <text x="${x}" y="${y + .75}" font-size="2" text-anchor="middle" fill="#0b1222" font-weight="700">${ICON[hz.type]}</text>
+            <title>${NET.hazard_types[hz.type]} (sev ${hz.severity}) – ${e.name}: ${hz.note || ''}</title></g>`;
+    });
+  }
+  for (const [k, n] of Object.entries(NET.nodes)) {
+    const on = k === $('src').value || k === $('dst').value;
+    h += `<circle cx="${n.x}" cy="${n.y}" r="${on ? 2.4 : 1.8}" fill="${on ? '#14b8a6' : '#e2e8f0'}" stroke="#0b1222" stroke-width=".5"/>
+          <text x="${n.x}" y="${n.y - 3.2}" font-size="2.6" text-anchor="middle" fill="#e2e8f0">${n.name}</text>`;
+  }
+  svg.innerHTML = h;
+}
+
+async function find() {
+  const q = new URLSearchParams({src: $('src').value, dst: $('dst').value,
+    night: $('night').checked ? 1 : 0, rain: $('rain').checked ? 1 : 0, safety: $('safety').value / 100});
+  $('results').innerHTML = '<div class="panel">Analysing routes…</div>';
+  const r = await fetch('/api/routes?' + q);
+  const d = await r.json();
+  if (!r.ok) { $('results').innerHTML = `<div class="panel err">${d.error}</div>`; $('advice').style.display = 'none'; DATA = null; drawMap(); return; }
+  DATA = d; SEL = d.recommended_id; render();
+}
+
+function render() {
+  $('results').innerHTML = DATA.routes.map(r => {
+    const c = LEVEL_COLOR[r.risk_level];
+    return `<div class="route ${r.id === SEL ? 'sel' : ''}" onclick="SEL=${r.id};render()">
+      <div class="top"><div>${r.tags.map(t => `<span class="tag ${t}">${t}</span>`).join('')}</div>
+        <span class="badge" style="background:${c}">${r.risk_score} · ${r.risk_level}</span></div>
+      <div class="via">${r.names.join(' → ')}</div>
+      <div class="meter"><i style="width:${r.risk_score}%;background:${c}"></i></div>
+      <div class="stats"><span>⏱ ${r.minutes} min</span><span>📏 ${r.km} km</span>
+        <span>⚠ ${Object.values(r.hazard_counts).reduce((a, b) => a + b, 0)} hazards</span></div></div>`;
+  }).join('');
+  const a = DATA.advice, sel = DATA.routes.find(r => r.id === SEL);
+  const list = arr => arr.length ? `<ul>${arr.map(x => `<li>${x}</li>`).join('')}</ul>` : '';
+  $('advice').style.display = 'block';
+  $('advice').innerHTML = `<h3>🤖 AI route advisor</h3><p>${a.summary}</p>
+    ${a.avoided.length ? '<h4>Hazards avoided</h4>' + list(a.avoided) : ''}
+    ${a.remaining.length ? '<h4>Main remaining risks on the recommended route</h4>' + list(a.remaining) : ''}
+    ${a.tips.length ? '<h4>Safety tips</h4>' + list(a.tips) : ''}
+    <h4>Selected route: hazard breakdown</h4>${list(sel.top_hazards.map(h => `${h.label} on ${h.road} – severity ${h.severity}/5${h.crowdsourced ? ' (crowdsourced)' : ''}`))}
+    <div class="src">Explanation source: ${a.source}. Risk score = 100 × (1 − e^(−points/35)).</div>`;
+  drawMap();
+}
+
+$('go').onclick = find;
+$('safety').oninput = wlabel;
+$('report').onclick = async () => {
+  const e = NET.edges[+$('rroad').value];
+  const res = await fetch('/api/report', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({a: e.a, b: e.b, type: $('rtype').value, severity: +$('rsev').value, note: $('rnote').value})});
+  if (res.ok) {
+    $('rmsg').textContent = 'Thanks! Report added and risk scores updated.'; $('rnote').value = '';
+    NET = await (await fetch('/api/network')).json(); find();
+  } else $('rmsg').textContent = 'Could not submit report.';
+};
+$('src').onchange = $('dst').onchange = drawMap;
+wlabel(); init();
+</script>
+</body>
+</html>
