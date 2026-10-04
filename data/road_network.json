@@ -1,0 +1,61 @@
+{
+  "city": "Demo City",
+  "nodes": {
+    "RS": {"name": "Railway Station", "x": 8,  "y": 50},
+    "BT": {"name": "Bus Terminal",    "x": 24, "y": 18},
+    "MK": {"name": "Market Square",   "x": 38, "y": 50},
+    "UN": {"name": "University Campus","x": 58, "y": 14},
+    "HO": {"name": "City Hospital",   "x": 62, "y": 50},
+    "TP": {"name": "Tech Park",       "x": 90, "y": 30},
+    "ML": {"name": "City Mall",       "x": 80, "y": 82},
+    "RV": {"name": "Riverside",       "x": 30, "y": 86},
+    "OB": {"name": "Old Bridge",      "x": 54, "y": 76}
+  },
+  "edges": [
+    {"a":"RS","b":"BT","km":3.2,"name":"Station Road","hazards":[
+      {"type":"pothole","severity":2,"note":"Patchy surface near the station"},
+      {"type":"poor_lighting","severity":3,"note":"Streetlights out on a long stretch"}]},
+    {"a":"RS","b":"MK","km":2.8,"name":"Mall Road","hazards":[
+      {"type":"pothole","severity":3,"note":"Deep potholes before the flyover"},
+      {"type":"congestion","severity":4,"note":"Heavy peak-hour traffic"},
+      {"type":"poor_lighting","severity":2,"note":"Dim lighting near the market gate"}]},
+    {"a":"RS","b":"RV","km":4.0,"name":"River Link Road","hazards":[
+      {"type":"poor_lighting","severity":4,"note":"Unlit road along the river"},
+      {"type":"waterlogging","severity":3,"note":"Low-lying section floods"}]},
+    {"a":"BT","b":"MK","km":2.5,"name":"Bus Depot Road","hazards":[
+      {"type":"congestion","severity":3,"note":"Buses and autos block lanes"},
+      {"type":"reported_hazard","severity":2,"note":"Broken divider reported by commuters"}]},
+    {"a":"BT","b":"UN","km":3.0,"name":"College Avenue","hazards":[
+      {"type":"poor_lighting","severity":1,"note":"Minor lighting gaps"}]},
+    {"a":"MK","b":"UN","km":3.4,"name":"Central Ring","hazards":[
+      {"type":"accident_zone","severity":3,"note":"Junction with repeated collisions"},
+      {"type":"congestion","severity":2,"note":"Moderate traffic"}]},
+    {"a":"MK","b":"HO","km":2.6,"name":"Hospital Road","hazards":[
+      {"type":"accident_zone","severity":5,"note":"High-fatality blackspot"},
+      {"type":"waterlogging","severity":4,"note":"Knee-deep water after rain"},
+      {"type":"congestion","severity":3,"note":"Ambulance and market traffic"}]},
+    {"a":"MK","b":"OB","km":3.5,"name":"Bridge Road","hazards":[
+      {"type":"pothole","severity":2,"note":"Uneven patches"}]},
+    {"a":"RV","b":"OB","km":2.9,"name":"Riverside Drive","hazards":[
+      {"type":"waterlogging","severity":5,"note":"Frequently submerged"},
+      {"type":"poor_lighting","severity":4,"note":"No streetlights"}]},
+    {"a":"OB","b":"HO","km":2.2,"name":"Canal Road","hazards":[
+      {"type":"waterlogging","severity":3,"note":"Drain overflow"},
+      {"type":"reported_hazard","severity":3,"note":"Open manhole reported"}]},
+    {"a":"OB","b":"ML","km":3.1,"name":"Mall Link","hazards":[
+      {"type":"congestion","severity":2,"note":"Weekend shopping traffic"}]},
+    {"a":"UN","b":"HO","km":3.6,"name":"Campus Bypass","hazards":[
+      {"type":"poor_lighting","severity":1,"note":"Minor lighting gaps"}]},
+    {"a":"UN","b":"TP","km":3.8,"name":"Tech Park Expressway","hazards":[
+      {"type":"accident_zone","severity":2,"note":"Occasional speeding incidents"}]},
+    {"a":"HO","b":"TP","km":3.5,"name":"Industrial Road","hazards":[
+      {"type":"pothole","severity":4,"note":"Heavy-vehicle damage"},
+      {"type":"poor_lighting","severity":3,"note":"Dark industrial stretch"},
+      {"type":"accident_zone","severity":3,"note":"Truck-related crashes"}]},
+    {"a":"HO","b":"ML","km":3.4,"name":"Ring Road South","hazards":[
+      {"type":"congestion","severity":3,"note":"Slow-moving traffic"}]},
+    {"a":"ML","b":"TP","km":4.2,"name":"Highway Connector","hazards":[
+      {"type":"accident_zone","severity":4,"note":"High-speed collision zone"},
+      {"type":"congestion","severity":2,"note":"Toll queue"}]}
+  ]
+}
